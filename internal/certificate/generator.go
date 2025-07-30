@@ -39,6 +39,15 @@ type CertBundle struct {
 	KeyPEM  []byte
 }
 
+// UnifiedPEM returns a single PEM file containing both the certificate and private key
+func (cb *CertBundle) UnifiedPEM() []byte {
+	// Concatenate cert and key PEM blocks
+	unified := make([]byte, 0, len(cb.CertPEM)+len(cb.KeyPEM))
+	unified = append(unified, cb.CertPEM...)
+	unified = append(unified, cb.KeyPEM...)
+	return unified
+}
+
 // GenerateCA creates a new CA certificate and private key
 func GenerateCA(config CAConfig) (*CertBundle, error) {
 	// Generate private key

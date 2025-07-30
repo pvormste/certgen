@@ -125,6 +125,17 @@ func (s *Server) handleGenerateCA(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// Add unified PEM to ZIP
+	unifiedWriter, err := zipWriter.Create("ca.pem")
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	if _, err := unifiedWriter.Write(bundle.UnifiedPEM()); err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
 	if err := zipWriter.Close(); err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
@@ -233,6 +244,17 @@ func (s *Server) handleGenerateCert(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	if _, err := keyWriter.Write(bundle.KeyPEM); err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	// Add unified PEM to ZIP
+	unifiedWriter, err := zipWriter.Create(prefix + ".pem")
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	if _, err := unifiedWriter.Write(bundle.UnifiedPEM()); err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
