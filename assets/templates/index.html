@@ -1,0 +1,371 @@
+<!doctype html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>mTLS Certificate Generator</title>
+        <link rel="stylesheet" href="/static/pico.css" />
+        <style>
+            .hidden {
+                display: none;
+            }
+            .dns-input,
+            .ip-input {
+                margin-bottom: 0.5rem;
+            }
+        </style>
+    </head>
+    <body>
+        <main class="container">
+            <h1>mTLS Certificate Generator</h1>
+
+            <!-- CA Certificate Generation Section -->
+            <article>
+                <header>
+                    <h2>CA Certificate Generation</h2>
+                </header>
+                <form id="caForm">
+                    <div class="grid">
+                        <label>
+                            Organization
+                            <input
+                                type="text"
+                                name="organization"
+                                required
+                                placeholder="Your Organization"
+                            />
+                        </label>
+                        <label>
+                            Common Name
+                            <input
+                                type="text"
+                                name="commonName"
+                                required
+                                placeholder="Your CA Name"
+                            />
+                        </label>
+                    </div>
+                    <div class="grid">
+                        <label>
+                            Country
+                            <input
+                                type="text"
+                                name="country"
+                                required
+                                placeholder="US"
+                            />
+                        </label>
+                        <label>
+                            Locality
+                            <input
+                                type="text"
+                                name="locality"
+                                required
+                                placeholder="San Francisco"
+                            />
+                        </label>
+                    </div>
+                    <label>
+                        Expiry (days)
+                        <input
+                            type="number"
+                            name="expiryDays"
+                            required
+                            value="365"
+                            min="1"
+                        />
+                    </label>
+                    <button type="submit">Generate CA Certificate</button>
+                </form>
+            </article>
+
+            <!-- Client/Server Certificate Generation Section -->
+            <article>
+                <header>
+                    <h2>Client/Server Certificate Generation</h2>
+                </header>
+                <form id="certForm">
+                    <div class="grid">
+                        <label>
+                            CA Certificate
+                            <input
+                                type="file"
+                                name="caCert"
+                                required
+                                accept=".crt,.pem"
+                            />
+                        </label>
+                        <label>
+                            CA Private Key
+                            <input
+                                type="file"
+                                name="caKey"
+                                required
+                                accept=".key,.pem"
+                            />
+                        </label>
+                    </div>
+                    <div class="grid">
+                        <label>
+                            Organization
+                            <input
+                                type="text"
+                                name="organization"
+                                required
+                                placeholder="Your Organization"
+                            />
+                        </label>
+                        <label>
+                            Common Name
+                            <input
+                                type="text"
+                                name="commonName"
+                                required
+                                placeholder="Certificate Name"
+                            />
+                        </label>
+                    </div>
+                    <div class="grid">
+                        <label>
+                            Country
+                            <input
+                                type="text"
+                                name="country"
+                                required
+                                placeholder="US"
+                            />
+                        </label>
+                        <label>
+                            Locality
+                            <input
+                                type="text"
+                                name="locality"
+                                required
+                                placeholder="San Francisco"
+                            />
+                        </label>
+                    </div>
+                    <label>
+                        Expiry (days)
+                        <input
+                            type="number"
+                            name="expiryDays"
+                            required
+                            value="365"
+                            min="1"
+                        />
+                    </label>
+                    <div class="grid">
+                        <fieldset>
+                            <legend>Certificate Type</legend>
+                            <label>
+                                <input
+                                    type="radio"
+                                    name="certType"
+                                    value="server"
+                                    checked
+                                />
+                                Server Certificate
+                            </label>
+                            <label>
+                                <input
+                                    type="radio"
+                                    name="certType"
+                                    value="client"
+                                />
+                                Client Certificate
+                            </label>
+                        </fieldset>
+                    </div>
+                    <div id="serverOptions" class="server-options">
+                        <div>
+                            <label>DNS Names</label>
+                            <div id="dnsInputs">
+                                <div class="dns-input grid">
+                                    <input
+                                        type="text"
+                                        name="dnsNames[]"
+                                        placeholder="example.com"
+                                    />
+                                    <button
+                                        type="button"
+                                        class="outline"
+                                        onclick="addDNSInput()"
+                                    >
+                                        Add DNS Name
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                        <div>
+                            <label>IP Addresses</label>
+                            <div id="ipInputs">
+                                <div class="ip-input grid">
+                                    <input
+                                        type="text"
+                                        name="ipAddresses[]"
+                                        placeholder="192.168.1.1"
+                                    />
+                                    <button
+                                        type="button"
+                                        class="outline"
+                                        onclick="addIPInput()"
+                                    >
+                                        Add IP Address
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <button type="submit">Generate Certificate</button>
+                </form>
+            </article>
+        </main>
+
+        <script>
+            function addDNSInput() {
+                const container = document.getElementById("dnsInputs");
+                const div = document.createElement("div");
+                div.className = "dns-input grid";
+                div.innerHTML = `
+                <input type="text" name="dnsNames[]" placeholder="example.com">
+                <button type="button" class="outline" onclick="this.parentElement.remove()">Remove</button>
+            `;
+                container.appendChild(div);
+            }
+
+            function addIPInput() {
+                const container = document.getElementById("ipInputs");
+                const div = document.createElement("div");
+                div.className = "ip-input grid";
+                div.innerHTML = `
+                <input type="text" name="ipAddresses[]" placeholder="192.168.1.1">
+                <button type="button" class="outline" onclick="this.parentElement.remove()">Remove</button>
+            `;
+                container.appendChild(div);
+            }
+
+            document
+                .querySelectorAll('input[name="certType"]')
+                .forEach((radio) => {
+                    radio.addEventListener("change", (e) => {
+                        const serverOptions =
+                            document.getElementById("serverOptions");
+                        serverOptions.classList.toggle(
+                            "hidden",
+                            e.target.value === "client",
+                        );
+                    });
+                });
+
+            document
+                .getElementById("caForm")
+                .addEventListener("submit", async (e) => {
+                    e.preventDefault();
+                    const formData = new FormData(e.target);
+                    const data = {
+                        organization: formData.get("organization"),
+                        commonName: formData.get("commonName"),
+                        country: formData.get("country"),
+                        locality: formData.get("locality"),
+                        expiryDays: parseInt(formData.get("expiryDays")),
+                    };
+
+                    try {
+                        const response = await fetch("/generate/ca", {
+                            method: "POST",
+                            headers: {
+                                "Content-Type": "application/json",
+                            },
+                            body: JSON.stringify(data),
+                        });
+
+                        if (!response.ok) {
+                            throw new Error(
+                                `HTTP error! status: ${response.status}`,
+                            );
+                        }
+
+                        // Trigger download
+                        const blob = await response.blob();
+                        const url = window.URL.createObjectURL(blob);
+                        const a = document.createElement("a");
+                        a.href = url;
+                        a.download = "ca-certificate.zip";
+                        document.body.appendChild(a);
+                        a.click();
+                        window.URL.revokeObjectURL(url);
+                        a.remove();
+                    } catch (error) {
+                        console.error("Error:", error);
+                        alert(
+                            "Failed to generate CA certificate: " +
+                                error.message,
+                        );
+                    }
+                });
+
+            document
+                .getElementById("certForm")
+                .addEventListener("submit", async (e) => {
+                    e.preventDefault();
+                    const formData = new FormData(e.target);
+                    const isClient = formData.get("certType") === "client";
+
+                    const data = {
+                        organization: formData.get("organization"),
+                        commonName: formData.get("commonName"),
+                        country: formData.get("country"),
+                        locality: formData.get("locality"),
+                        expiryDays: parseInt(formData.get("expiryDays")),
+                        isClient: isClient,
+                    };
+
+                    if (!isClient) {
+                        data.dnsNames = Array.from(
+                            formData.getAll("dnsNames[]"),
+                        ).filter(Boolean);
+                        data.ipAddresses = Array.from(
+                            formData.getAll("ipAddresses[]"),
+                        ).filter(Boolean);
+                    }
+
+                    const submitFormData = new FormData();
+                    submitFormData.append("caCert", formData.get("caCert"));
+                    submitFormData.append("caKey", formData.get("caKey"));
+                    submitFormData.append("formData", JSON.stringify(data));
+
+                    try {
+                        const response = await fetch("/generate/cert", {
+                            method: "POST",
+                            body: submitFormData,
+                        });
+
+                        if (!response.ok) {
+                            throw new Error(
+                                `HTTP error! status: ${response.status}`,
+                            );
+                        }
+
+                        // Trigger download
+                        const blob = await response.blob();
+                        const url = window.URL.createObjectURL(blob);
+                        const a = document.createElement("a");
+                        a.href = url;
+                        a.download =
+                            (isClient ? "client" : "server") +
+                            "-certificate.zip";
+                        document.body.appendChild(a);
+                        a.click();
+                        window.URL.revokeObjectURL(url);
+                        a.remove();
+                    } catch (error) {
+                        console.error("Error:", error);
+                        alert(
+                            "Failed to generate certificate: " + error.message,
+                        );
+                    }
+                });
+        </script>
+    </body>
+</html>
