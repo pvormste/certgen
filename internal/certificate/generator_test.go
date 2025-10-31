@@ -242,3 +242,158 @@ func TestGenerateCertInvalidCA(t *testing.T) {
 		t.Error("GenerateCert() should fail with invalid CA PEM data")
 	}
 }
+
+func TestChainPEM(t *testing.T) {
+	// Generate a CA
+	caConfig := CAConfig{
+		Organization: "Test CA Org",
+		CommonName:   "Test CA",
+		Country:      "US",
+		Locality:     "Test City",
+		ExpiryDays:   365,
+	}
+	ca, err := GenerateCA(caConfig)
+	if err != nil {
+		t.Fatalf("Failed to generate CA: %v", err)
+	}
+
+	// Generate a client certificate
+	certConfig := CertConfig{
+		Organization: "Test Org",
+		CommonName:   "Test Client",
+		Country:      "US",
+		Locality:     "Test City",
+		ExpiryDays:   365,
+		IsClient:     true,
+	}
+	bundle, err := GenerateCert(certConfig, ca.CertPEM, ca.KeyPEM)
+	if err != nil {
+		t.Fatalf("Failed to generate certificate: %v", err)
+	}
+
+	// Test ChainPEM
+	chain := bundle.ChainPEM(ca.CertPEM)
+	if len(chain) == 0 {
+		t.Error("ChainPEM returned empty data")
+	}
+
+	// Verify the chain contains both certificates
+	// Count the number of certificate blocks
+	remainingData := chain
+	certCount := 0
+	for len(remainingData) > 0 {
+		block, rest := pem.Decode(remainingData)
+		if block == nil {
+			break
+		}
+		if block.Type == "CERTIFICATE" {
+			certCount++
+			// Verify we can parse the certificate
+			_, err := x509.ParseCertificate(block.Bytes)
+			if err != nil {
+				t.Errorf("Failed to parse certificate %d in chain: %v", certCount, err)
+			}
+		}
+		remainingData = rest
+	}
+
+	if certCount != 2 {
+		t.Errorf("Expected 2 certificates in chain, got %d", certCount)
+	}
+
+	// Verify the first certificate is the leaf (not a CA)
+	firstBlock, _ := pem.Decode(chain)
+	if firstBlock == nil {
+		t.Fatal("Failed to decode first certificate in chain")
+	}
+	firstCert, err := x509.ParseCertificate(firstBlock.Bytes)
+	if err != nil {
+		t.Fatalf("Failed to parse first certificate: %v", err)
+	}
+	if firstCert.IsCA {
+		t.Error("First certificate in chain should be leaf (non-CA), but it's a CA")
+	}
+}
+
+func TestFullChainPEM(t *testing.T) {
+	// Generate a CA
+	caConfig := CAConfig{
+		Organization: "Test CA Org",
+		CommonName:   "Test CA",
+		Country:      "US",
+		Locality:     "Test City",
+		ExpiryDays:   365,
+	}
+	ca, err := GenerateCA(caConfig)
+	if err != nil {
+		t.Fatalf("Failed to generate CA: %v", err)
+	}
+
+	// Generate a server certificate
+	certConfig := CertConfig{
+		Organization: "Test Org",
+		CommonName:   "Test Server",
+		Country:      "US",
+		Locality:     "Test City",
+		ExpiryDays:   365,
+		IsClient:     false,
+		DNSNames:     []string{"localhost"},
+	}
+	bundle, err := GenerateCert(certConfig, ca.CertPEM, ca.KeyPEM)
+	if err != nil {
+		t.Fatalf("Failed to generate certificate: %v", err)
+	}
+
+	// Test FullChainPEM
+	fullChain := bundle.FullChainPEM(ca.CertPEM)
+	if len(fullChain) == 0 {
+		t.Error("FullChainPEM returned empty data")
+	}
+
+	// Verify the chain contains two certificates and one private key
+	remainingData := fullChain
+	certCount := 0
+	keyCount := 0
+	for len(remainingData) > 0 {
+		block, rest := pem.Decode(remainingData)
+		if block == nil {
+			break
+		}
+		if block.Type == "CERTIFICATE" {
+			certCount++
+			// Verify we can parse the certificate
+			_, err := x509.ParseCertificate(block.Bytes)
+			if err != nil {
+				t.Errorf("Failed to parse certificate %d in full chain: %v", certCount, err)
+			}
+		} else if block.Type == "EC PRIVATE KEY" {
+			keyCount++
+			// Verify we can parse the private key
+			_, err := x509.ParseECPrivateKey(block.Bytes)
+			if err != nil {
+				t.Errorf("Failed to parse private key in full chain: %v", err)
+			}
+		}
+		remainingData = rest
+	}
+
+	if certCount != 2 {
+		t.Errorf("Expected 2 certificates in full chain, got %d", certCount)
+	}
+	if keyCount != 1 {
+		t.Errorf("Expected 1 private key in full chain, got %d", keyCount)
+	}
+
+	// Verify the first certificate is the leaf (not a CA)
+	firstBlock, _ := pem.Decode(fullChain)
+	if firstBlock == nil {
+		t.Fatal("Failed to decode first certificate in full chain")
+	}
+	firstCert, err := x509.ParseCertificate(firstBlock.Bytes)
+	if err != nil {
+		t.Fatalf("Failed to parse first certificate: %v", err)
+	}
+	if firstCert.IsCA {
+		t.Error("First certificate in full chain should be leaf (non-CA), but it's a CA")
+	}
+}

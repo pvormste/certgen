@@ -48,6 +48,23 @@ func (cb *CertBundle) UnifiedPEM() []byte {
 	return unified
 }
 
+// ChainPEM returns a PEM file containing the leaf certificate followed by the CA certificate
+func (cb *CertBundle) ChainPEM(caCertPEM []byte) []byte {
+	chain := make([]byte, 0, len(cb.CertPEM)+len(caCertPEM))
+	chain = append(chain, cb.CertPEM...)
+	chain = append(chain, caCertPEM...)
+	return chain
+}
+
+// FullChainPEM returns a PEM file containing the leaf cert, CA cert, and private key
+func (cb *CertBundle) FullChainPEM(caCertPEM []byte) []byte {
+	fullChain := make([]byte, 0, len(cb.CertPEM)+len(caCertPEM)+len(cb.KeyPEM))
+	fullChain = append(fullChain, cb.CertPEM...)
+	fullChain = append(fullChain, caCertPEM...)
+	fullChain = append(fullChain, cb.KeyPEM...)
+	return fullChain
+}
+
 // GenerateCA creates a new CA certificate and private key
 func GenerateCA(config CAConfig) (*CertBundle, error) {
 	// Generate private key

@@ -63,11 +63,43 @@ CertGen is a web-based tool for generating X.509 certificates for development an
 
 ## Certificate File Formats
 
-The generated certificates are provided in three formats:
+The generated certificates are provided in multiple formats:
 
-- `.crt` - The X.509 certificate in PEM format
-- `.key` - The private key in PEM format
-- `.pem` - A unified file containing both the certificate and private key in PEM format
+### For CA Certificates:
+- `ca.crt` - The CA certificate in PEM format
+- `ca.key` - The CA private key in PEM format
+- `ca.pem` - A unified file containing both the CA certificate and private key
+
+### For Client/Server Certificates:
+- `[client|server].crt` - The leaf certificate in PEM format
+- `[client|server].key` - The private key in PEM format
+- `[client|server].pem` - A unified file containing both the leaf certificate and private key
+- `[client|server]-chain.pem` - Certificate chain containing the leaf certificate followed by the CA certificate (useful for validation)
+- `[client|server]-fullchain.pem` - Full chain containing the leaf certificate, CA certificate, and private key (convenient for some mTLS configurations)
+
+### When to Use Each Format
+
+- **`.crt` and `.key`**: When you need separate certificate and key files (common in many server configurations)
+- **`.pem`**: When you need certificate and key in a single file (convenient for many applications)
+- **`-chain.pem`**: When you need to present the full certificate chain for validation (required by some TLS clients)
+- **`-fullchain.pem`**: When you need everything in one file - certificate chain and private key (useful for some mTLS setups and load balancers)
+
+### Example Use Cases
+
+**Using chain files with curl:**
+```bash
+# Client authentication with full chain
+curl --cert client-fullchain.pem --cacert ca.crt https://example.com
+
+# Server verification with chain
+curl --cert client.pem --cacert server-chain.pem https://example.com
+```
+
+**Using with nginx:**
+```nginx
+ssl_certificate /path/to/server-chain.pem;
+ssl_certificate_key /path/to/server.key;
+```
 
 ## Security Considerations
 

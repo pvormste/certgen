@@ -259,6 +259,28 @@ func (s *Server) handleGenerateCert(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// Add certificate chain (cert + CA) to ZIP
+	chainWriter, err := zipWriter.Create(prefix + "-chain.pem")
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	if _, err := chainWriter.Write(bundle.ChainPEM(caCertPEM)); err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	// Add full chain (cert + CA + key) to ZIP
+	fullChainWriter, err := zipWriter.Create(prefix + "-fullchain.pem")
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	if _, err := fullChainWriter.Write(bundle.FullChainPEM(caCertPEM)); err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
 	if err := zipWriter.Close(); err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
