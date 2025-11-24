@@ -33,7 +33,7 @@ CertGen is a web-based tool for generating X.509 certificates for development an
    ```bash
    go run main.go -addr :9595
    # or using environment variable
-   PORT=:9595 go run main.go
+   PORT=9595 go run main.go
    ```
 
 3. Open your web browser and navigate to `http://localhost` (or the port you configured)
@@ -54,12 +54,12 @@ docker run -d -p 80:80 --name certgen certgen
 
 **On port 443:**
 ```bash
-docker run -d -p 443:443 -e PORT=:443 --name certgen certgen
+docker run -d -p 443:443 -e PORT=443 --name certgen certgen
 ```
 
 **On a custom port (e.g., 9595):**
 ```bash
-docker run -d -p 9595:9595 -e PORT=:9595 --name certgen certgen
+docker run -d -p 9595:9595 -e PORT=9595 --name certgen certgen
 ```
 
 **Run both HTTP and HTTPS (requires TLS setup with reverse proxy):**
