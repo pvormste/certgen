@@ -21,13 +21,59 @@ CertGen is a web-based tool for generating X.509 certificates for development an
 
 ## Usage
 
+### Running with Go
+
 1. Start the server:
    ```bash
    go run main.go
    ```
-   The server will start on `localhost:9595` by default.
+   The server will start on port `80` by default.
 
-2. Open your web browser and navigate to `http://localhost:9595`
+2. To run on a different port:
+   ```bash
+   go run main.go -addr :9595
+   # or using environment variable
+   PORT=:9595 go run main.go
+   ```
+
+3. Open your web browser and navigate to `http://localhost` (or the port you configured)
+
+### Running with Docker
+
+#### Build the Docker image:
+```bash
+docker build -t certgen .
+```
+
+#### Run the container:
+
+**On port 80 (default):**
+```bash
+docker run -d -p 80:80 --name certgen certgen
+```
+
+**On port 443:**
+```bash
+docker run -d -p 443:443 -e PORT=:443 --name certgen certgen
+```
+
+**On a custom port (e.g., 9595):**
+```bash
+docker run -d -p 9595:9595 -e PORT=:9595 --name certgen certgen
+```
+
+**Run both HTTP and HTTPS (requires TLS setup with reverse proxy):**
+```bash
+docker run -d -p 80:80 -p 443:443 --name certgen certgen
+```
+
+The Docker image uses a multi-stage build:
+- **Build stage**: Uses `golang:1.25` to compile the application
+- **Runtime stage**: Uses `alpine:latest` for a minimal footprint (~15MB)
+- Runs as a non-root user for security
+- Includes CA certificates for HTTPS support
+
+### Using Certificates
 
 3. Generate certificates:
    - First, create a CA certificate
@@ -118,6 +164,12 @@ cd certgen
 go build
 ```
 
+### Building Docker Image
+
+```bash
+docker build -t certgen .
+```
+
 ### Project Structure
 
 ```
@@ -128,5 +180,6 @@ certgen/
 ├── internal/
 │   ├── certificate/ # Certificate generation logic
 │   └── server/     # HTTP server implementation
+├── Dockerfile      # Multi-stage Docker build
 └── main.go        # Application entry point
 ```
