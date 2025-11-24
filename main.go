@@ -12,7 +12,7 @@ func main() {
 	// Default to port 80, but allow override via flag or environment variable
 	defaultAddr := ":80"
 	if port := os.Getenv("PORT"); port != "" {
-		defaultAddr = port
+		defaultAddr = ":" + port
 	}
 
 	// Parse command line flags
