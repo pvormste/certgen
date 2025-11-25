@@ -12,6 +12,7 @@ import (
 
 	"github.com/pvormste/certgen/assets"
 	"github.com/pvormste/certgen/internal/certificate"
+	"github.com/pvormste/certgen/internal/random"
 )
 
 // FormData holds the form data for certificate generation
@@ -59,6 +60,9 @@ func (s *Server) Start(addr string) error {
 	http.HandleFunc("/", s.handleIndex)
 	http.HandleFunc("/generate/ca", s.handleGenerateCA)
 	http.HandleFunc("/generate/cert", s.handleGenerateCert)
+	http.HandleFunc("/gen/random/ca", s.handleRandomCA)
+	http.HandleFunc("/gen/random/server", s.handleRandomServer)
+	http.HandleFunc("/gen/random/client", s.handleRandomClient)
 
 	log.Printf("Server starting on %s", addr)
 	return http.ListenAndServe(addr, nil)
@@ -289,6 +293,54 @@ func (s *Server) handleGenerateCert(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/zip")
 	w.Header().Set("Content-Disposition", "attachment; filename="+prefix+"-certificate.zip")
 	if _, err := io.Copy(w, buf); err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+}
+
+// handleRandomCA handles random CA data generation
+func (s *Server) handleRandomCA(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodGet {
+		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+		return
+	}
+
+	data := random.GenerateRandomCA()
+
+	w.Header().Set("Content-Type", "application/json")
+	if err := json.NewEncoder(w).Encode(data); err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+}
+
+// handleRandomServer handles random server data generation
+func (s *Server) handleRandomServer(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodGet {
+		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+		return
+	}
+
+	data := random.GenerateRandomServer()
+
+	w.Header().Set("Content-Type", "application/json")
+	if err := json.NewEncoder(w).Encode(data); err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+}
+
+// handleRandomClient handles random client data generation
+func (s *Server) handleRandomClient(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodGet {
+		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+		return
+	}
+
+	data := random.GenerateRandomClient()
+
+	w.Header().Set("Content-Type", "application/json")
+	if err := json.NewEncoder(w).Encode(data); err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}

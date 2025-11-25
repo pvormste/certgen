@@ -21,6 +21,23 @@
             footer a {
                 text-decoration: none;
             }
+            article header {
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+                margin-bottom: 1rem;
+            }
+            article header h2 {
+                margin: 0;
+            }
+            .header-buttons {
+                display: flex;
+                gap: 0.5rem;
+            }
+            .header-buttons button {
+                margin: 0;
+                white-space: nowrap;
+            }
         </style>
     </head>
     <body>
@@ -31,6 +48,9 @@
             <article>
                 <header>
                     <h2>CA Certificate Generation</h2>
+                    <div class="header-buttons">
+                        <button type="button" class="outline" onclick="fillRandomCA()">Random CA</button>
+                    </div>
                 </header>
                 <form id="caForm">
                     <div class="grid">
@@ -91,6 +111,10 @@
             <article>
                 <header>
                     <h2>Client/Server Certificate Generation</h2>
+                    <div class="header-buttons">
+                        <button type="button" class="outline" onclick="fillRandomServer()">Random Server</button>
+                        <button type="button" class="outline" onclick="fillRandomClient()">Random Client</button>
+                    </div>
                 </header>
                 <form id="certForm">
                     <div class="grid">
@@ -242,6 +266,105 @@
         </footer>
 
         <script>
+            // Random data generator functions
+            async function fillRandomCA() {
+                try {
+                    const response = await fetch('/gen/random/ca');
+                    if (!response.ok) {
+                        throw new Error(`HTTP error! status: ${response.status}`);
+                    }
+                    const data = await response.json();
+                    
+                    const form = document.getElementById('caForm');
+                    form.querySelector('input[name="organization"]').value = data.organization;
+                    form.querySelector('input[name="commonName"]').value = data.commonName;
+                    form.querySelector('input[name="country"]').value = data.country;
+                    form.querySelector('input[name="locality"]').value = data.locality;
+                    form.querySelector('input[name="expiryDays"]').value = data.expiryDays;
+                } catch (error) {
+                    console.error('Error:', error);
+                    alert('Failed to generate random CA data: ' + error.message);
+                }
+            }
+
+            async function fillRandomServer() {
+                try {
+                    const response = await fetch('/gen/random/server');
+                    if (!response.ok) {
+                        throw new Error(`HTTP error! status: ${response.status}`);
+                    }
+                    const data = await response.json();
+                    
+                    const form = document.getElementById('certForm');
+                    form.querySelector('input[name="organization"]').value = data.organization;
+                    form.querySelector('input[name="commonName"]').value = data.commonName;
+                    form.querySelector('input[name="country"]').value = data.country;
+                    form.querySelector('input[name="locality"]').value = data.locality;
+                    form.querySelector('input[name="expiryDays"]').value = data.expiryDays;
+                    
+                    // Set certificate type to server
+                    form.querySelector('input[name="certType"][value="server"]').checked = true;
+                    document.getElementById('serverOptions').classList.remove('hidden');
+                    
+                    // Clear and set DNS names
+                    const dnsContainer = document.getElementById('dnsInputs');
+                    dnsContainer.innerHTML = '';
+                    data.dnsNames.forEach((dns, index) => {
+                        const div = document.createElement('div');
+                        div.className = 'dns-input grid';
+                        div.innerHTML = `
+                            <input type="text" name="dnsNames[]" placeholder="example.com" value="${dns}">
+                            <button type="button" class="outline" onclick="${index === 0 ? 'addDNSInput()' : 'this.parentElement.remove()'}">
+                                ${index === 0 ? 'Add DNS Name' : 'Remove'}
+                            </button>
+                        `;
+                        dnsContainer.appendChild(div);
+                    });
+                    
+                    // Clear and set IP addresses
+                    const ipContainer = document.getElementById('ipInputs');
+                    ipContainer.innerHTML = '';
+                    data.ipAddresses.forEach((ip, index) => {
+                        const div = document.createElement('div');
+                        div.className = 'ip-input grid';
+                        div.innerHTML = `
+                            <input type="text" name="ipAddresses[]" placeholder="192.168.1.1" value="${ip}">
+                            <button type="button" class="outline" onclick="${index === 0 ? 'addIPInput()' : 'this.parentElement.remove()'}">
+                                ${index === 0 ? 'Add IP Address' : 'Remove'}
+                            </button>
+                        `;
+                        ipContainer.appendChild(div);
+                    });
+                } catch (error) {
+                    console.error('Error:', error);
+                    alert('Failed to generate random server data: ' + error.message);
+                }
+            }
+
+            async function fillRandomClient() {
+                try {
+                    const response = await fetch('/gen/random/client');
+                    if (!response.ok) {
+                        throw new Error(`HTTP error! status: ${response.status}`);
+                    }
+                    const data = await response.json();
+                    
+                    const form = document.getElementById('certForm');
+                    form.querySelector('input[name="organization"]').value = data.organization;
+                    form.querySelector('input[name="commonName"]').value = data.commonName;
+                    form.querySelector('input[name="country"]').value = data.country;
+                    form.querySelector('input[name="locality"]').value = data.locality;
+                    form.querySelector('input[name="expiryDays"]').value = data.expiryDays;
+                    
+                    // Set certificate type to client
+                    form.querySelector('input[name="certType"][value="client"]').checked = true;
+                    document.getElementById('serverOptions').classList.add('hidden');
+                } catch (error) {
+                    console.error('Error:', error);
+                    alert('Failed to generate random client data: ' + error.message);
+                }
+            }
+
             function addDNSInput() {
                 const container = document.getElementById("dnsInputs");
                 const div = document.createElement("div");
