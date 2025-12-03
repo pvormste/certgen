@@ -41,27 +41,66 @@ type CertBundle struct {
 
 // UnifiedPEM returns a single PEM file containing both the certificate and private key
 func (cb *CertBundle) UnifiedPEM() []byte {
-	// Concatenate cert and key PEM blocks
-	unified := make([]byte, 0, len(cb.CertPEM)+len(cb.KeyPEM))
+	// Ensure PEM blocks are properly separated with newlines
+	unified := make([]byte, 0, len(cb.CertPEM)+len(cb.KeyPEM)+1)
+
+	// Add certificate
 	unified = append(unified, cb.CertPEM...)
+
+	// Ensure there's a newline between certificate and private key
+	if len(unified) > 0 && unified[len(unified)-1] != '\n' {
+		unified = append(unified, '\n')
+	}
+
+	// Add private key
 	unified = append(unified, cb.KeyPEM...)
+
 	return unified
 }
 
 // ChainPEM returns a PEM file containing the leaf certificate followed by the CA certificate
 func (cb *CertBundle) ChainPEM(caCertPEM []byte) []byte {
-	chain := make([]byte, 0, len(cb.CertPEM)+len(caCertPEM))
+	// Ensure PEM blocks are properly separated with newlines
+	chain := make([]byte, 0, len(cb.CertPEM)+len(caCertPEM)+1)
+
+	// Add certificate
 	chain = append(chain, cb.CertPEM...)
+
+	// Ensure there's a newline between certificate and CA certificate
+	if len(chain) > 0 && chain[len(chain)-1] != '\n' {
+		chain = append(chain, '\n')
+	}
+
+	// Add CA certificate
 	chain = append(chain, caCertPEM...)
+
 	return chain
 }
 
 // FullChainPEM returns a PEM file containing the leaf cert, CA cert, and private key
 func (cb *CertBundle) FullChainPEM(caCertPEM []byte) []byte {
-	fullChain := make([]byte, 0, len(cb.CertPEM)+len(caCertPEM)+len(cb.KeyPEM))
+	// Ensure PEM blocks are properly separated with newlines
+	fullChain := make([]byte, 0, len(cb.CertPEM)+len(caCertPEM)+len(cb.KeyPEM)+2)
+
+	// Add certificate
 	fullChain = append(fullChain, cb.CertPEM...)
+
+	// Ensure there's a newline between certificate and CA certificate
+	if len(fullChain) > 0 && fullChain[len(fullChain)-1] != '\n' {
+		fullChain = append(fullChain, '\n')
+	}
+
+	// Add CA certificate
 	fullChain = append(fullChain, caCertPEM...)
+
+	// Ensure there's a newline between CA certificate and private key
+	if len(fullChain) > 0 && fullChain[len(fullChain)-1] != '\n' {
+		fullChain = append(fullChain, '\n')
+	}
+
+	// Add private key
 	fullChain = append(fullChain, cb.KeyPEM...)
+
 	return fullChain
 }
 

@@ -10,8 +10,10 @@ import (
 	"log"
 	"net/http"
 
+	mcpServer "github.com/mark3labs/mcp-go/server"
 	"github.com/pvormste/certgen/assets"
 	"github.com/pvormste/certgen/internal/certificate"
+	mcpPkg "github.com/pvormste/certgen/internal/mcp"
 	"github.com/pvormste/certgen/internal/random"
 )
 
@@ -55,6 +57,10 @@ func (s *Server) Start(addr string) error {
 
 	// Static file server using embedded files
 	http.Handle("/static/", http.StripPrefix("/static/", http.FileServer(http.FS(staticRoot))))
+
+	// MCP server setup
+	mcpSrv := mcpPkg.NewServer()
+	http.Handle("/mcp", mcpServer.NewStreamableHTTPServer(mcpSrv))
 
 	// Route handlers
 	http.HandleFunc("/", s.handleIndex)

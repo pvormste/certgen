@@ -1,2 +1,5 @@
 certgen
 .vscode/
+.gemini/
+.ai/
+.cursor/
