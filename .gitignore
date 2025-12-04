@@ -3,3 +3,5 @@ certgen
 .gemini/
 .ai/
 .cursor/
+.factory/
+.DS_Store

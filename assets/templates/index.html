@@ -38,9 +38,37 @@
                 margin: 0;
                 white-space: nowrap;
             }
+            .mcp-copy-btn {
+                position: fixed;
+                top: 1rem;
+                right: 1rem;
+                z-index: 1000;
+                margin: 0;
+                white-space: nowrap;
+                padding: 0.4rem 0.8rem;
+                font-size: 0.85rem;
+            }
+            .mcp-copy-btn.copied {
+                background-color: #43a047;
+                border-color: #43a047;
+            }
+            .mcp-copy-btn .checkmark {
+                display: none;
+            }
+            .mcp-copy-btn.copied .checkmark {
+                display: inline;
+            }
+            .mcp-copy-btn.copied .copy-text {
+                display: none;
+            }
         </style>
     </head>
     <body>
+        <button class="mcp-copy-btn" onclick="copyMcpUrl(this)">
+            <span class="copy-text">Copy MCP URL</span>
+            <span class="checkmark">✓ Copied!</span>
+        </button>
+
         <main class="container">
             <h1>mTLS Certificate Generator</h1>
 
@@ -266,6 +294,24 @@
         </footer>
 
         <script>
+            // Copy MCP URL function
+            async function copyMcpUrl(button) {
+                const mcpUrl = window.location.origin + '/mcp';
+                
+                try {
+                    await navigator.clipboard.writeText(mcpUrl);
+                    button.classList.add('copied');
+                    
+                    // Reset after 2 seconds
+                    setTimeout(() => {
+                        button.classList.remove('copied');
+                    }, 2000);
+                } catch (err) {
+                    console.error('Failed to copy:', err);
+                    alert('Failed to copy MCP URL');
+                }
+            }
+
             // Random data generator functions
             async function fillRandomCA() {
                 try {
