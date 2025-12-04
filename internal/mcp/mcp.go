@@ -2,13 +2,27 @@ package mcp
 
 import (
 	"context"
-	"fmt"
 	"strings"
 
 	"github.com/mark3labs/mcp-go/mcp"
 	"github.com/mark3labs/mcp-go/server"
 	"github.com/pvormste/certgen/internal/certificate"
 )
+
+// CAResponse represents the JSON response for CA certificate generation.
+type CAResponse struct {
+	Certificate string `json:"certificate"`
+	PrivateKey  string `json:"privateKey"`
+}
+
+// CertResponse represents the JSON response for server/client certificate generation.
+type CertResponse struct {
+	Certificate  string `json:"certificate"`
+	PrivateKey   string `json:"privateKey"`
+	UnifiedPEM   string `json:"unifiedPEM"`
+	ChainPEM     string `json:"chainPEM"`
+	FullChainPEM string `json:"fullChainPEM"`
+}
 
 // NewServer creates and configures a new MCP server with certificate generation tools.
 func NewServer() *server.MCPServer {
@@ -145,20 +159,15 @@ func handleGenerateCA(ctx context.Context, req mcp.CallToolRequest) (*mcp.CallTo
 
 	bundle, err := certificate.GenerateCA(config)
 	if err != nil {
-		return nil, fmt.Errorf("failed to generate CA: %w", err)
+		return mcp.NewToolResultError("failed to generate CA: " + err.Error()), nil
 	}
 
-	output := fmt.Sprintf(`## CA Certificate
+	response := CAResponse{
+		Certificate: string(bundle.CertPEM),
+		PrivateKey:  string(bundle.KeyPEM),
+	}
 
-`+"```"+`
-%s`+"```"+`
-
-## Private Key
-
-`+"```"+`
-%s`+"```", string(bundle.CertPEM), string(bundle.KeyPEM))
-
-	return mcp.NewToolResultText(output), nil
+	return mcp.NewToolResultJSON(response)
 }
 
 // handleGenerateServerCert handles the generate_server_certificate tool call.
@@ -202,40 +211,18 @@ func handleGenerateServerCert(ctx context.Context, req mcp.CallToolRequest) (*mc
 
 	bundle, err := certificate.GenerateCert(config, []byte(caCert), []byte(caKey))
 	if err != nil {
-		return nil, fmt.Errorf("failed to generate server certificate: %w", err)
+		return mcp.NewToolResultError("failed to generate server certificate: " + err.Error()), nil
 	}
 
-	output := fmt.Sprintf(`## Server Certificate
+	response := CertResponse{
+		Certificate:  string(bundle.CertPEM),
+		PrivateKey:   string(bundle.KeyPEM),
+		UnifiedPEM:   string(bundle.UnifiedPEM()),
+		ChainPEM:     string(bundle.ChainPEM([]byte(caCert))),
+		FullChainPEM: string(bundle.FullChainPEM([]byte(caCert))),
+	}
 
-`+"```"+`
-%s`+"```"+`
-
-## Private Key
-
-`+"```"+`
-%s`+"```"+`
-
-## Unified PEM (Certificate + Key)
-
-`+"```"+`
-%s`+"```"+`
-
-## Certificate Chain (Server Cert + CA Cert)
-
-`+"```"+`
-%s`+"```"+`
-
-## Full Chain (Server Cert + CA Cert + Key)
-
-`+"```"+`
-%s`+"```",
-		string(bundle.CertPEM),
-		string(bundle.KeyPEM),
-		string(bundle.UnifiedPEM()),
-		string(bundle.ChainPEM([]byte(caCert))),
-		string(bundle.FullChainPEM([]byte(caCert))))
-
-	return mcp.NewToolResultText(output), nil
+	return mcp.NewToolResultJSON(response)
 }
 
 // handleGenerateClientCert handles the generate_client_certificate tool call.
@@ -259,39 +246,17 @@ func handleGenerateClientCert(ctx context.Context, req mcp.CallToolRequest) (*mc
 
 	bundle, err := certificate.GenerateCert(config, []byte(caCert), []byte(caKey))
 	if err != nil {
-		return nil, fmt.Errorf("failed to generate client certificate: %w", err)
+		return mcp.NewToolResultError("failed to generate client certificate: " + err.Error()), nil
 	}
 
-	output := fmt.Sprintf(`## Client Certificate
+	response := CertResponse{
+		Certificate:  string(bundle.CertPEM),
+		PrivateKey:   string(bundle.KeyPEM),
+		UnifiedPEM:   string(bundle.UnifiedPEM()),
+		ChainPEM:     string(bundle.ChainPEM([]byte(caCert))),
+		FullChainPEM: string(bundle.FullChainPEM([]byte(caCert))),
+	}
 
-`+"```"+`
-%s`+"```"+`
-
-## Private Key
-
-`+"```"+`
-%s`+"```"+`
-
-## Unified PEM (Certificate + Key)
-
-`+"```"+`
-%s`+"```"+`
-
-## Certificate Chain (Client Cert + CA Cert)
-
-`+"```"+`
-%s`+"```"+`
-
-## Full Chain (Client Cert + CA Cert + Key)
-
-`+"```"+`
-%s`+"```",
-		string(bundle.CertPEM),
-		string(bundle.KeyPEM),
-		string(bundle.UnifiedPEM()),
-		string(bundle.ChainPEM([]byte(caCert))),
-		string(bundle.FullChainPEM([]byte(caCert))))
-
-	return mcp.NewToolResultText(output), nil
+	return mcp.NewToolResultJSON(response)
 }
 
